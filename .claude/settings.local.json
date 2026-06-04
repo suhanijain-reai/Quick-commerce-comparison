@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ps -p 6036 -o pid,ppid,command)",
+      "Bash(kill 6036)",
+      "Bash(node src/server.js)",
+      "Bash(echo \"PID=$!\")"
+    ]
+  }
+}

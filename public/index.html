@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blinkit Price Scraper</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="brand">
+          <span class="brand__mark">b</span>
+          <span class="brand__name">blinkit <span class="brand__sub">price scraper</span></span>
+        </div>
+        <nav class="tabs" role="tablist">
+          <button class="tab tab--active" data-mode="search" role="tab" aria-selected="true">Search</button>
+          <button class="tab" data-mode="bulk" role="tab" aria-selected="false">Bulk</button>
+          <button class="tab" data-mode="compare" role="tab" aria-selected="false">Compare</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Mode-specific form panels -->
+    <div class="panel-strip">
+      <div class="panel-strip__inner">
+
+        <!-- Single search -->
+        <form id="panel-search" class="panel">
+          <div class="field field--pincode">
+            <span class="field__icon">📍</span>
+            <input
+              id="pincode"
+              name="pincode"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="Pincode"
+              autocomplete="postal-code"
+              required
+            />
+          </div>
+          <div class="field field--query">
+            <span class="field__icon">🔍</span>
+            <input
+              id="query"
+              name="query"
+              type="text"
+              placeholder="Search for milk, bread, eggs…"
+              autocomplete="off"
+              required
+            />
+          </div>
+          <button type="submit" id="search-btn" class="btn">Search</button>
+        </form>
+
+        <!-- Bulk search -->
+        <form id="panel-bulk" class="panel" hidden>
+          <div class="field field--pincode">
+            <span class="field__icon">📍</span>
+            <input
+              id="bulk-pincode"
+              type="text"
+              inputmode="numeric"
+              maxlength="6"
+              placeholder="Pincode"
+              autocomplete="postal-code"
+              required
+            />
+          </div>
+          <div class="field field--queries">
+            <span class="field__icon">📋</span>
+            <textarea
+              id="bulk-queries"
+              placeholder="milk&#10;bread&#10;eggs&#10;(one per line, max 10)"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" id="bulk-btn" class="btn">Search All</button>
+        </form>
+
+        <!-- Compare: by pincode OR by platform (Blinkit vs Zepto) -->
+        <form id="panel-compare" class="panel panel--compare" hidden>
+
+          <!-- Sub-mode toggle -->
+          <div class="sub-tabs">
+            <button class="sub-tab sub-tab--active" data-compare="pincode" type="button">By Pincode</button>
+            <button class="sub-tab" data-compare="platform" type="button">Blinkit vs Zepto</button>
+          </div>
+
+          <!-- By Pincode fields -->
+          <div id="cmp-pincode-fields" class="sub-fields">
+            <div class="field field--pincode">
+              <span class="field__icon">📍</span>
+              <input
+                id="cmp-pincode1"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="Pincode 1"
+                autocomplete="postal-code"
+              />
+            </div>
+            <div class="field field--pincode">
+              <span class="field__icon">📍</span>
+              <input
+                id="cmp-pincode2"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="Pincode 2"
+                autocomplete="postal-code"
+              />
+            </div>
+            <div class="field field--query">
+              <span class="field__icon">🔍</span>
+              <input
+                id="cmp-query"
+                type="text"
+                placeholder="Search for milk, bread, eggs…"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <!-- By Platform fields -->
+          <div id="cmp-platform-fields" class="sub-fields" hidden>
+            <div class="field field--pincode">
+              <span class="field__icon">📍</span>
+              <input
+                id="cmp-plat-pincode"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                placeholder="Pincode"
+                autocomplete="postal-code"
+              />
+            </div>
+            <div class="field field--query">
+              <span class="field__icon">🔍</span>
+              <input
+                id="cmp-plat-query"
+                type="text"
+                placeholder="Search for milk, bread, eggs…"
+                autocomplete="off"
+              />
+            </div>
+          </div>
+
+          <button type="submit" id="cmp-btn" class="btn">Compare</button>
+        </form>
+
+      </div>
+    </div>
+
+    <main class="container">
+      <!-- Meta / status bar (single search) -->
+      <div id="meta" class="meta" hidden></div>
+
+      <!-- Sort + filter bar (single search only) -->
+      <div id="sort-bar" class="sort-bar" hidden>
+        <div class="sort-bar__left">
+          <span class="sort-bar__label">Sort:</span>
+          <div class="sort-pills">
+            <button class="sort-pill sort-pill--active" data-sort="default">Default</button>
+            <button class="sort-pill" data-sort="price-asc">Price ↑</button>
+            <button class="sort-pill" data-sort="price-desc">Price ↓</button>
+            <button class="sort-pill" data-sort="discount">Discount</button>
+          </div>
+        </div>
+        <label class="instock-filter">
+          <input type="checkbox" id="instock-only" /> In-stock only
+        </label>
+      </div>
+
+      <!-- Single search results grid -->
+      <section id="results" class="grid" aria-live="polite"></section>
+
+      <!-- Compare results (two columns) -->
+      <div id="compare-results" class="compare" hidden>
+        <div class="compare__col">
+          <div class="compare__header">
+            <span class="tag" id="cmp-tag1"></span>
+            <span class="compare__count" id="cmp-count1"></span>
+          </div>
+          <div class="grid" id="cmp-grid1"></div>
+        </div>
+        <div class="compare__divider"></div>
+        <div class="compare__col">
+          <div class="compare__header">
+            <span class="tag" id="cmp-tag2"></span>
+            <span class="compare__count" id="cmp-count2"></span>
+          </div>
+          <div class="grid" id="cmp-grid2"></div>
+        </div>
+      </div>
+
+      <!-- Bulk results (collapsible groups per query) -->
+      <div id="bulk-results" hidden></div>
+
+      <!-- Loading skeletons -->
+      <section id="skeletons" class="grid" hidden></section>
+
+      <!-- Empty / first-load hero -->
+      <section id="hero" class="hero">
+        <div class="hero__emoji">🛒</div>
+        <h1 class="hero__title">Compare Blinkit prices by pincode</h1>
+        <p class="hero__text">
+          Enter a 6-digit pincode and a product to see live prices, MRP, discounts
+          and availability scraped from Blinkit.
+        </p>
+        <div class="chips">
+          <span class="chips__label">Try:</span>
+          <button class="chip" data-pincode="400001" data-query="amul milk">Amul milk · Mumbai</button>
+          <button class="chip" data-pincode="560034" data-query="bread">Bread · Bengaluru</button>
+          <button class="chip" data-pincode="110001" data-query="eggs">Eggs · Delhi</button>
+        </div>
+      </section>
+
+      <!-- Error state -->
+      <section id="error" class="state state--error" hidden>
+        <div class="state__emoji">⚠️</div>
+        <p id="error-text" class="state__text"></p>
+        <button id="retry-btn" class="btn btn--ghost">Try again</button>
+      </section>
+
+      <!-- No results state -->
+      <section id="empty" class="state" hidden>
+        <div class="state__emoji">😕</div>
+        <p class="state__text">No products found for that search.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      For educational use only · Data scraped from Blinkit
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
